@@ -98,16 +98,19 @@ class Trainer(object):
         for step in trange(self.start_step, self.max_step):
             fetch_dict = {
                 "k_update": self.k_update,
+                "measure": self.measure,
             }
             if step % self.log_step == 0:
                 fetch_dict.update({
                     "summary": self.summary_op,
                     "g_loss": self.g_loss,
                     "d_loss": self.d_loss,
-                    "measure": self.measure,
                     "k_t": self.k_t,
                 })
             result = self.sess.run(fetch_dict)
+
+            measure = result['measure']
+            measure_history.append(measure)
 
             if step % self.log_step == 0:
                 self.summary_writer.add_summary(result['summary'], step)
@@ -115,7 +118,6 @@ class Trainer(object):
 
                 g_loss = result['g_loss']
                 d_loss = result['d_loss']
-                measure = result['measure']
                 k_t = result['k_t']
 
                 print("[{}/{}] Loss_D: {:.6f} Loss_G: {:.6f} measure: {:.4f}, k_t: {:.4f}". \
@@ -126,11 +128,10 @@ class Trainer(object):
                 self.autoencode(x_fixed, self.model_dir, idx=step, x_fake=x_fake)
 
             if step % self.lr_update_step == self.lr_update_step - 1:
-                #cur_measure = np.mean(measure_history)
-                #self.sess.run([self.g_lr_update, self.d_lr_update])
-                #if cur_measure > prev_measure * 0.99:
-                self.sess.run([self.g_lr_update, self.d_lr_update])
-                #prev_measure = cur_measure
+                cur_measure = np.mean(measure_history)
+                if cur_measure > prev_measure * 0.99:
+                    self.sess.run([self.g_lr_update, self.d_lr_update])
+                prev_measure = cur_measure
 
     def build_model(self):
         _, height, width, channel = get_conv_shape(self.data_loader, self.data_format)
