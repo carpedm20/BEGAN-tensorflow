@@ -10,7 +10,7 @@ Tensorflow implementation of [BEGAN: Boundary Equilibrium Generative Adversarial
 - Python 2.7
 - [Pillow](https://pillow.readthedocs.io/en/4.0.x/)
 - [tqdm](https://github.com/tqdm/tqdm)
-- [TensorFlow](https://github.com/tensorflow/tensorflow)
+- [TensorFlow 1.1.0](https://github.com/tensorflow/tensorflow) (**Need nightly build** which can be found in [here](https://github.com/tensorflow/tensorflow#installation))
 - [requests](https://github.com/kennethreitz/requests) (Only used for downloading CelebA dataset)
 
 
