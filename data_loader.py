@@ -3,7 +3,7 @@ from PIL import Image
 from glob import glob
 import tensorflow as tf
 
-def get_loader(root, batch_size, scale, data_format, split=None, is_grayscale=False, seed=None):
+def get_loader(root, batch_size, scale_size, data_format, split=None, is_grayscale=False, seed=None):
     dataset_name = os.path.basename(root)
     if dataset_name in ['CelebA'] and split:
         root = os.path.join(root, 'splits', split)
