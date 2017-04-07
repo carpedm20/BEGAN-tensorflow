@@ -44,6 +44,7 @@ To test a model (use your `load_path`):
 
 - [BEGAN-tensorflow](https://github.com/carpedm20/began-tensorflow) at least can generate human faces but [BEGAN-pytorch](https://github.com/carpedm20/BEGAN-pytorch) can't.
 - Both [BEGAN-tensorflow](https://github.com/carpedm20/began-tensorflow) and [BEGAN-pytorch](https://github.com/carpedm20/BEGAN-pytorch) shows **modal collapses** and I guess this is due to a wrong scheuduling of lr (Paper mentioned that *simply reducing the lr was sufficient to avoid them*).
+- Still couldn't reach the quality of paper's result and have some issue [#1](https://github.com/carpedm20/BEGAN-tensorflow/issues/1).
 
 ### Generator outputs (after 82400 step)
 
