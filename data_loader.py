@@ -41,8 +41,8 @@ def get_loader(root, batch_size, scale, data_format, split=None, is_grayscale=Fa
         min_after_dequeue=min_after_dequeue, name='synthetic_inputs')
 
     if dataset_name in ['CelebA']:
-        queue = tf.image.resize_nearest_neighbor(queue, [78, 64])
-        queue = tf.image.crop_to_bounding_box(queue, 7, 0, 64, 64)
+        queue = tf.image.crop_to_bounding_box(queue, 50, 25, 128, 128)
+        queue = tf.image.resize_nearest_neighbor(queue, [scale_size, scale_size])
     else:
         queue = tf.image.resize_nearest_neighbor(queue, [scale_size, scale_size])
 
