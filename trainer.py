@@ -141,7 +141,7 @@ class Trainer(object):
         x = norm_img(self.x)
 
         self.z = tf.random_uniform(
-                (tf.shape(x)[0], self.conv_hidden_num), minval=-1.0, maxval=1.0)
+                (tf.shape(x)[0], self.z_num), minval=-1.0, maxval=1.0)
         self.k_t = tf.Variable(0., trainable=False, name='k_t')
 
         G, self.G_var = GeneratorCNN(
