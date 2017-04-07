@@ -181,7 +181,6 @@ class Trainer(object):
                     tf.concat([G, x], 0), channel, self.z_num, repeat_num,
                     self.conv_hidden_num, self.data_format)
             AE_G, AE_x = tf.split(d_out, 2)
-        import ipdb; ipdb.set_trace() 
 
         self.G = denorm_img(G, self.data_format)
         self.AE_G, self.AE_x = denorm_img(AE_G, self.data_format), denorm_img(AE_x, self.data_format)
