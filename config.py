@@ -19,6 +19,7 @@ net_arg.add_argument('--input_scale_size', type=int, default=64,
 net_arg.add_argument('--conv_hidden_num', type=int, default=128,
                      choices=[64, 128],help='n in the paper')
 net_arg.add_argument('--z_num', type=int, default=64, choices=[64, 128])
+net_arg.add_argument('--use_authors_model', type=str2bool, default=True)
 
 # Data
 data_arg = add_argument_group('Data')

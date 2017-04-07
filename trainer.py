@@ -67,6 +67,7 @@ class Trainer(object):
         self.save_step = config.save_step
         self.lr_update_step = config.lr_update_step
 
+        self.use_authors_model = config.use_authors_model
         self.build_model()
 
         self.saver = tf.train.Saver()
@@ -144,13 +145,43 @@ class Trainer(object):
                 (tf.shape(x)[0], self.z_num), minval=-1.0, maxval=1.0)
         self.k_t = tf.Variable(0., trainable=False, name='k_t')
 
-        G, self.G_var = GeneratorCNN(
-                self.z, self.z_num, channel, repeat_num, self.data_format, reuse=False)
+        if self.use_authors_model:
+            from layers import LayerEncodeConvGrowLinear, LayerDecodeConvBlend
 
-        d_out, self.D_var = DiscriminatorCNN(
-                tf.concat([G, x], 0), channel, self.z_num, repeat_num,
-                self.conv_hidden_num, self.data_format)
-        AE_G, AE_x = tf.split(d_out, 2)
+            G_in = slim.fully_connected(self.z, np.prod([8, 8, self.conv_hidden_num]))
+            G_in = reshape(G_in, 8, 8, self.conv_hidden_num, self.data_format)
+
+            G_enc = LayerDecodeConvBlend("G_decode", self.conv_hidden_num, 3, channel,
+                                         2, repeat_num, data_format=self.data_format)
+            G, self.G_var = G_enc(G_in, 0)
+            G = tf.reshape(G, [-1, self.input_scale_size, self.input_scale_size, channel])
+
+            D_enc = LayerEncodeConvGrowLinear("D_encode", self.conv_hidden_num, 3, channel,
+                                              2, repeat_num - 1, data_format=self.data_format)
+            D_enc, D_enc_var = D_enc(tf.concat([G, x], 0), 0)
+
+            out = tf.reshape(D_enc, [-1, np.prod([8, 8, int_shape(D_enc)[-1]])])
+            out = slim.fully_connected(out, self.z_num)
+
+            # Decoder
+            out = slim.fully_connected(out, np.prod([8, 8, self.conv_hidden_num]))
+            out = reshape(out, 8, 8, self.conv_hidden_num, self.data_format)
+
+            D_dec = LayerDecodeConvBlend("D_decode", self.conv_hidden_num, 2, channel,
+                                         2, repeat_num, data_format=self.data_format)
+            D, D_dec_var = D_dec(out, 0)
+            AE_G, AE_x = tf.split(D, 2)
+
+            self.D_var = D_enc_var + D_dec_var
+        else:
+            G, self.G_var = GeneratorCNN(
+                    self.z, self.conv_hidden_num, channel, repeat_num, self.data_format, reuse=False)
+
+            d_out, self.D_var = DiscriminatorCNN(
+                    tf.concat([G, x], 0), channel, self.z_num, repeat_num,
+                    self.conv_hidden_num, self.data_format)
+            AE_G, AE_x = tf.split(d_out, 2)
+        import ipdb; ipdb.set_trace() 
 
         self.G = denorm_img(G, self.data_format)
         self.AE_G, self.AE_x = denorm_img(AE_G, self.data_format), denorm_img(AE_x, self.data_format)
