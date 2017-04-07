@@ -128,10 +128,10 @@ class Trainer(object):
                 self.autoencode(x_fixed, self.model_dir, idx=step, x_fake=x_fake)
 
             if step % self.lr_update_step == self.lr_update_step - 1:
-                cur_measure = np.mean(measure_history)
-                if cur_measure > prev_measure * 0.99:
-                    self.sess.run([self.g_lr_update, self.d_lr_update])
-                prev_measure = cur_measure
+                self.sess.run([self.g_lr_update, self.d_lr_update])
+                #cur_measure = np.mean(measure_history)
+                #if cur_measure > prev_measure * 0.99:
+                #prev_measure = cur_measure
 
     def build_model(self):
         _, height, width, channel = get_conv_shape(self.data_loader, self.data_format)
@@ -175,8 +175,8 @@ class Trainer(object):
         self.measure = self.d_loss_real + tf.abs(self.balance)
 
         with tf.control_dependencies([d_optim, g_optim]):
-            self.k_update = tf.assign_add(self.k_t, self.lambda_k * self.balance)
-            self.k_t = tf.clip_by_value(self.k_t, 0, 1)
+            self.k_update = tf.assign(
+                self.k_t, tf.clip_by_value(self.k_t + self.lambda_k * self.balance, 0, 1))
 
         self.summary_op = tf.summary.merge([
             tf.summary.image("G", self.G),
