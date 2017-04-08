@@ -29,6 +29,14 @@ def norm_img(image, data_format=None):
 def denorm_img(norm, data_format):
     return to_nhwc(norm*255.0, data_format)
 
+def slerp(val, low, high):
+    """Code from https://github.com/soumith/dcgan.torch/issues/14"""
+    omega = np.arccos(np.clip(np.dot(low/np.linalg.norm(low), high/np.linalg.norm(high)), -1, 1))
+    so = np.sin(omega)
+    if so == 0:
+        return (1.0-val) * low + val * high # L'Hopital's rule/LERP
+    return np.sin((1.0-val)*omega) / so * low + np.sin(val*omega) / so * high
+
 class Trainer(object):
     def __init__(self, config, data_loader):
         self.config = config
@@ -177,7 +185,7 @@ class Trainer(object):
             G, self.G_var = GeneratorCNN(
                     self.z, self.conv_hidden_num, channel, repeat_num, self.data_format, reuse=False)
 
-            d_out, self.D_var = DiscriminatorCNN(
+            d_out, self.D_z, self.D_var = DiscriminatorCNN(
                     tf.concat([G, x], 0), channel, self.z_num, repeat_num,
                     self.conv_hidden_num, self.data_format)
             AE_G, AE_x = tf.split(d_out, 2)
@@ -224,8 +232,9 @@ class Trainer(object):
             tf.summary.scalar("misc/balance", self.balance),
         ])
 
-    def generate(self, inputs, path, idx=None):
-        path = '{}/{}_G.png'.format(path, idx)
+    def generate(self, inputs, root_path=None, path=None, idx=None):
+        if path is None:
+            path = '{}/{}_G.png'.format(root_path, idx)
         x = self.sess.run(self.G, {self.z: inputs})
         save_image(x, path)
         print("[*] Samples saved: {}".format(path))
@@ -247,10 +256,43 @@ class Trainer(object):
             save_image(x, x_path)
             print("[*] Samples saved: {}".format(x_path))
 
+    def encode(self, inputs):
+        if inputs.shape[3] in [1, 3]:
+            inputs = inputs.transpose([0, 3, 1, 2])
+        return self.sess.run(self.D_z, {self.x: inputs})
+
+    def decode(self, z):
+        return self.sess.run(self.AE_x, {self.D_z: z})
+
     def test(self):
-        x_fixed = self.get_image_from_loader()
-        save_image(x_fixed, '{}/x_fixed_test.png'.format(self.model_dir))
-        self.autoencode(x_fixed, self.model_dir, idx="test", x_fake=None)
+        root_path = "./"#self.model_dir
+
+        for step in range(10):
+            real1_batch = self.get_image_from_loader()
+            real2_batch = self.get_image_from_loader()
+
+            save_image(real1_batch, '{}/test{}_real1.png'.format(root_path, step))
+            save_image(real2_batch, '{}/test{}_real2.png'.format(root_path, step))
+
+            self.autoencode(real1_batch, self.model_dir, idx="test{}_real1".format(step))
+            self.autoencode(real2_batch, self.model_dir, idx="test{}_real2".format(step))
+
+            real1_encode = self.encode(real1_batch)
+            real2_encode = self.encode(real2_batch)
+
+            decodes = []
+            for idx, ratio in enumerate(np.linspace(0, 1, 10)):
+                z = np.stack([slerp(ratio, r1, r2) for r1, r2 in zip(real1_encode, real2_encode)])
+                z_decode = self.decode(z)
+                decodes.append(z_decode)
+
+            decodes = np.stack(decodes).transpose([1, 0, 2, 3, 4])
+            for idx, img in enumerate(decodes):
+                img = np.concatenate([[real1_batch[idx]], img, [real2_batch[idx]]], 0)
+                save_image(img, '{}/test{}_interp_{}.png'.format(root_path, step, idx), nrow=10 + 2)
+
+            z_fixed = np.random.uniform(-1, 1, size=(self.batch_size, self.z_num))
+            self.generate(z_fixed, path="{}/test{}_G_z.png".format(root_path, step))
 
     def get_image_from_loader(self):
         x = self.data_loader.eval(session=self.sess)

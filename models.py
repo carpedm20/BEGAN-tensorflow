@@ -33,7 +33,7 @@ def DiscriminatorCNN(x, input_channel, z_num, repeat_num, hidden_num, data_forma
                 x = slim.conv2d(x, channel_num, 3, 2, data_format=data_format)
 
         x = tf.reshape(x, [-1, np.prod([8, 8, channel_num])])
-        x = slim.fully_connected(x, z_num)
+        z = x = slim.fully_connected(x, z_num)
 
         # Decoder
         x = slim.fully_connected(x, np.prod([8, 8, hidden_num]))
@@ -48,7 +48,7 @@ def DiscriminatorCNN(x, input_channel, z_num, repeat_num, hidden_num, data_forma
         out = slim.conv2d(x, input_channel, 3, 1, data_format=data_format)
 
     variables = tf.contrib.framework.get_variables(vs)
-    return out, variables
+    return out, z, variables
 
 def int_shape(tensor):
     shape = tensor.get_shape().as_list()
