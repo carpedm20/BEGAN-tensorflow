@@ -36,7 +36,7 @@ To train a model:
 
 To test a model (use your `load_path`):
 
-    $ python main.py --dataset=CelebA --load_path=./logs/CelebA_0405_124806 --use_gpu=True --is_train=False --split valid
+    $ python main.py --dataset=CelebA --load_path=CelebA_0405_124806 --use_gpu=True --is_train=False --split valid
 
 
 ## Results
