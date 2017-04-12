@@ -42,11 +42,6 @@ To test a model (use your `load_path`):
 
 ## Results
 
-- [BEGAN-tensorflow](https://github.com/carpedm20/began-tensorflow) at least can generate human faces but [BEGAN-pytorch](https://github.com/carpedm20/BEGAN-pytorch) can't.
-- Both [BEGAN-tensorflow](https://github.com/carpedm20/began-tensorflow) and [BEGAN-pytorch](https://github.com/carpedm20/BEGAN-pytorch) shows **modal collapses** and I guess this is due to a wrong scheuduling of lr (Paper mentioned that *simply reducing the lr was sufficient to avoid them*).
-- Still couldn't reach the quality of paper's result and have some issue [#1](https://github.com/carpedm20/BEGAN-tensorflow/issues/1).
-
-
 ### Autoencoded Generator outputs
 
 <img src="./assets/AE_G1.png" width="7%"> <img src="./assets/AE_G2.png" width="7%">
@@ -64,7 +59,7 @@ To test a model (use your `load_path`):
 <img src="./assets/AE_G25.png" width="7%"> <img src="./assets/AE_G26.png" width="7%">
 
 
-### Interpolation of real images
+### Interpolation of real images with Discriminator
 
 ![alt tag](./assets/AE_batch.png)
 ![alt tag](./assets/interp_1.png)
@@ -79,20 +74,11 @@ To test a model (use your `load_path`):
 ![alt tag](./assets/interp_10.png)
 
 
-### Generator outputs (after 100k step)
+### Generator and Discriminator outputs (after 58k step)
 
-<img src="./assets/G1.png" width="7%"> <img src="./assets/G2.png" width="7%">
-<img src="./assets/G3.png" width="7%"> <img src="./assets/G4.png" width="7%">
-<img src="./assets/G5.png" width="7%"> <img src="./assets/G6.png" width="7%">
+<img src="./assets/58600.png" width="80%">
 
-
-### Generator and Discriminator outputs (after 100k step)
-
-<img src="./assets/104050_G.png" width="20%"> <img src="./assets/104050_AE_G.png" width="20%">
-
-<img src="./assets/107300_G.png" width="20%"> <img src="./assets/107300_AE_G.png" width="20%">
-
-<img src="./assets/115827_G.png" width="20%"> <img src="./assets/115827_AE_G.png" width="20%">
+(in progress)
 
 
 ## Author
