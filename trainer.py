@@ -21,13 +21,13 @@ def to_nhwc(image, data_format):
     return image
 
 def norm_img(image, data_format=None):
-    image = image/255.0 - 0.5
+    image = image/127.5 - 1.
     if data_format:
         image = to_nhwc(image, data_format)
     return image
 
 def denorm_img(norm, data_format):
-    return to_nhwc((norm + 0.5)*255.0, data_format)
+    return to_nhwc((norm + 1)*127.5, data_format)
 
 def slerp(val, low, high):
     """Code from https://github.com/soumith/dcgan.torch/issues/14"""
