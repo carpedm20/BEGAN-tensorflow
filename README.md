@@ -30,7 +30,8 @@ or you can use your own dataset by placing images like:
         ├── yyy.jpg
         └── ...
 
-To train a model: 
+To train a model:
+
     $ python main.py --dataset=CelebA --use_gpu=True
     $ python main.py --dataset=YOUR_DATASET_NAME --use_gpu=True
 
