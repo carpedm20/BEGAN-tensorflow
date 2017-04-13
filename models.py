@@ -13,7 +13,7 @@ def GeneratorCNN(z, hidden_num, output_num, repeat_num, data_format, reuse):
             if idx < repeat_num - 1:
                 x = upscale(x, 2, data_format)
 
-        out = slim.conv2d(x, 3, 3, 1, activation_fn=tf.nn.tanh, data_format=data_format)
+        out = slim.conv2d(x, 3, 3, 1, activation_fn=None, data_format=data_format)
 
     variables = tf.contrib.framework.get_variables(vs)
     return out, variables
@@ -45,7 +45,7 @@ def DiscriminatorCNN(x, input_channel, z_num, repeat_num, hidden_num, data_forma
             if idx < repeat_num - 1:
                 x = upscale(x, 2, data_format)
 
-        out = slim.conv2d(x, input_channel, 3, 1, activation_fn=tf.nn.tanh, data_format=data_format)
+        out = slim.conv2d(x, input_channel, 3, 1, activation_fn=None, data_format=data_format)
 
     variables = tf.contrib.framework.get_variables(vs)
     return out, z, variables

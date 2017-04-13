@@ -27,7 +27,7 @@ def norm_img(image, data_format=None):
     return image
 
 def denorm_img(norm, data_format):
-    return to_nhwc((norm + 1)*127.5, data_format)
+    return tf.clip_by_value(to_nhwc((norm + 1)*127.5, data_format), 0, 255)
 
 def slerp(val, low, high):
     """Code from https://github.com/soumith/dcgan.torch/issues/14"""
