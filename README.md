@@ -42,16 +42,24 @@ To test a model (use your `load_path`):
 
 ## Results
 
-### Generator output with `gamma=0.5`
+### Generator output (64x64) with `gamma=0.5` after 300k steps
 
-![all_G_z0](./assets/all_G_z0.png)
-![all_G_z1](./assets/all_G_z1.png)
+![all_G_z0_64x64](./assets/all_G_z0_64x64.png)
 
 
-### Interpolation of Generator output with `gamma=0.5`
+### Generator output (128x128) with `gamma=0.5` after 200k steps
 
-![interp_G0](./assets/interp_G0.png)
-![interp_G1](./assets/interp_G1.png)
+![all_G_z0_64x64](./assets/all_G_z0_128x128.png)
+
+
+### Interpolation of Generator output (64x64) with `gamma=0.5` after 300k steps
+
+![interp_G0_64x64](./assets/interp_G0_64x64.png)
+
+
+### Interpolation of Generator output (128x128) with `gamma=0.5` after 200k steps
+
+![interp_G0_128x128](./assets/interp_G0_128x128.png)
 
     
 ### Interpolation of Discriminator otuput of real images
