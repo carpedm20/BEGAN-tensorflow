@@ -17,8 +17,17 @@ def next(loader):
 
 def to_nhwc(image, data_format):
     if data_format == 'NCHW':
-        image = nchw_to_nhwc(image)
-    return image
+        new_image = nchw_to_nhwc(image)
+    else:
+        new_image = image
+    return new_image
+
+def to_nchw_numpy(image):
+    if image.shape[3] in [1, 3]:
+        new_image = image.transpose([0, 3, 1, 2])
+    else:
+        new_image = image
+    return new_image
 
 def norm_img(image, data_format=None):
     image = image/127.5 - 1.
@@ -69,12 +78,17 @@ class Trainer(object):
         self.use_gpu = config.use_gpu
         self.data_format = config.data_format
 
+        _, height, width, self.channel = \
+                get_conv_shape(self.data_loader, self.data_format)
+        self.repeat_num = int(np.log2(height)) - 2
+
         self.start_step = 0
         self.log_step = config.log_step
         self.max_step = config.max_step
         self.save_step = config.save_step
         self.lr_update_step = config.lr_update_step
 
+        self.is_train = config.is_train
         self.build_model()
 
         self.saver = tf.train.Saver()
@@ -86,13 +100,21 @@ class Trainer(object):
                                 summary_op=None,
                                 summary_writer=self.summary_writer,
                                 save_model_secs=300,
-                                global_step=self.step)
+                                global_step=self.step,
+                                ready_for_local_init_op=None)
 
         gpu_options = tf.GPUOptions(allow_growth=True)
         sess_config = tf.ConfigProto(allow_soft_placement=True,
                                     gpu_options=gpu_options)
 
         self.sess = sv.prepare_or_wait_for_session(config=sess_config)
+
+        if not self.is_train:
+            # dirty way to bypass graph finilization error
+            g = tf.get_default_graph()
+            g._finalized = False
+
+            self.build_test_model()
 
     def train(self):
         z_fixed = np.random.uniform(-1, 1, size=(self.batch_size, self.z_num))
@@ -142,9 +164,6 @@ class Trainer(object):
                 #prev_measure = cur_measure
 
     def build_model(self):
-        _, height, width, channel = get_conv_shape(self.data_loader, self.data_format)
-        repeat_num = int(np.log2(height)) - 2
-
         self.x = self.data_loader
         x = norm_img(self.x)
 
@@ -153,10 +172,11 @@ class Trainer(object):
         self.k_t = tf.Variable(0., trainable=False, name='k_t')
 
         G, self.G_var = GeneratorCNN(
-                self.z, self.conv_hidden_num, channel, repeat_num, self.data_format, reuse=False)
+                self.z, self.conv_hidden_num, self.channel,
+                self.repeat_num, self.data_format, reuse=False)
 
         d_out, self.D_z, self.D_var = DiscriminatorCNN(
-                tf.concat([G, x], 0), channel, self.z_num, repeat_num,
+                tf.concat([G, x], 0), self.channel, self.z_num, self.repeat_num,
                 self.conv_hidden_num, self.data_format)
         AE_G, AE_x = tf.split(d_out, 2)
 
@@ -202,12 +222,30 @@ class Trainer(object):
             tf.summary.scalar("misc/balance", self.balance),
         ])
 
-    def generate(self, inputs, root_path=None, path=None, idx=None):
-        if path is None:
-            path = '{}/{}_G.png'.format(root_path, idx)
+    def build_test_model(self):
+        with tf.variable_scope("test") as vs:
+            # Extra ops for interpolation
+            z_optimizer = tf.train.AdamOptimizer(0.0001)
+
+            self.z_r = tf.get_variable("z_r", [self.batch_size, self.z_num], tf.float32)
+            self.z_r_update = tf.assign(self.z_r, self.z)
+
+        G_z_r, _ = GeneratorCNN(
+                self.z_r, self.conv_hidden_num, self.channel, self.repeat_num, self.data_format, reuse=True)
+
+        with tf.variable_scope("test") as vs:
+            self.z_r_loss = tf.reduce_mean(tf.abs(self.x - G_z_r))
+            self.z_r_optim = z_optimizer.minimize(self.z_r_loss, var_list=[self.z_r])
+
+        test_variables = tf.contrib.framework.get_variables(vs)
+        self.sess.run(tf.variables_initializer(test_variables))
+
+    def generate(self, inputs, root_path=None, path=None, idx=None, save=True):
         x = self.sess.run(self.G, {self.z: inputs})
-        save_image(x, path)
-        print("[*] Samples saved: {}".format(path))
+        if path is None and save:
+            path = os.path.join(root_path, '{}_G.png'.format(idx))
+            save_image(x, path)
+            print("[*] Samples saved: {}".format(path))
         return x
 
     def autoencode(self, inputs, path, idx=None, x_fake=None):
@@ -221,7 +259,7 @@ class Trainer(object):
             if img.shape[3] in [1, 3]:
                 img = img.transpose([0, 3, 1, 2])
 
-            x_path = '{}/{}_D_{}.png'.format(path, idx, key)
+            x_path = os.path.join(path, '{}_D_{}.png'.format(idx, key))
             x = self.sess.run(self.AE_x, {self.x: img})
             save_image(x, x_path)
             print("[*] Samples saved: {}".format(x_path))
@@ -234,35 +272,77 @@ class Trainer(object):
     def decode(self, z):
         return self.sess.run(self.AE_x, {self.D_z: z})
 
+    def interpolate_G(self, real_batch, step=0, root_path='.', train_epoch=0):
+        batch_size = len(real_batch)
+        half_batch_size = batch_size/2
+
+        self.sess.run(self.z_r_update)
+        tf_real_batch = to_nchw_numpy(real_batch)
+        for i in trange(train_epoch):
+            z_r_loss, _ = self.sess.run([self.z_r_loss, self.z_r_optim], {self.x: tf_real_batch})
+        z = self.sess.run(self.z_r)
+
+        z1, z2 = z[:half_batch_size], z[half_batch_size:]
+        real1_batch, real2_batch = real_batch[:half_batch_size], real_batch[half_batch_size:]
+
+        generated = []
+        for idx, ratio in enumerate(np.linspace(0, 1, 10)):
+            z = np.stack([slerp(ratio, r1, r2) for r1, r2 in zip(z1, z2)])
+            z_decode = self.generate(z, save=False)
+            generated.append(z_decode)
+
+        generated = np.stack(generated).transpose([1, 0, 2, 3, 4])
+        for idx, img in enumerate(generated):
+            save_image(img, os.path.join(root_path, 'test{}_interp_G_{}.png'.format(step, idx)), nrow=10)
+
+        all_img_num = np.prod(generated.shape[:2])
+        batch_generated = np.reshape(generated, [all_img_num] + list(generated.shape[2:]))
+        save_image(batch_generated, os.path.join(root_path, 'test{}_interp_G.png'.format(step)), nrow=10)
+
+    def interpolate_D(self, real1_batch, real2_batch, step=0, root_path="."):
+        real1_encode = self.encode(real1_batch)
+        real2_encode = self.encode(real2_batch)
+
+        decodes = []
+        for idx, ratio in enumerate(np.linspace(0, 1, 10)):
+            z = np.stack([slerp(ratio, r1, r2) for r1, r2 in zip(real1_encode, real2_encode)])
+            z_decode = self.decode(z)
+            decodes.append(z_decode)
+
+        decodes = np.stack(decodes).transpose([1, 0, 2, 3, 4])
+        for idx, img in enumerate(decodes):
+            img = np.concatenate([[real1_batch[idx]], img, [real2_batch[idx]]], 0)
+            save_image(img, os.path.join(root_path, 'test{}_interp_D_{}.png'.format(step, idx)), nrow=10 + 2)
+
     def test(self):
         root_path = "./"#self.model_dir
 
-        for step in range(10):
+        all_G_z = None
+        for step in range(3):
             real1_batch = self.get_image_from_loader()
             real2_batch = self.get_image_from_loader()
 
-            save_image(real1_batch, '{}/test{}_real1.png'.format(root_path, step))
-            save_image(real2_batch, '{}/test{}_real2.png'.format(root_path, step))
+            save_image(real1_batch, os.path.join(root_path, 'test{}_real1.png'.format(step)))
+            save_image(real2_batch, os.path.join(root_path, 'test{}_real2.png'.format(step)))
 
-            self.autoencode(real1_batch, self.model_dir, idx="test{}_real1".format(step))
-            self.autoencode(real2_batch, self.model_dir, idx="test{}_real2".format(step))
+            self.autoencode(
+                    real1_batch, self.model_dir, idx=os.path.join(root_path, "test{}_real1".format(step)))
+            self.autoencode(
+                    real2_batch, self.model_dir, idx=os.path.join(root_path, "test{}_real2".format(step)))
 
-            real1_encode = self.encode(real1_batch)
-            real2_encode = self.encode(real2_batch)
-
-            decodes = []
-            for idx, ratio in enumerate(np.linspace(0, 1, 10)):
-                z = np.stack([slerp(ratio, r1, r2) for r1, r2 in zip(real1_encode, real2_encode)])
-                z_decode = self.decode(z)
-                decodes.append(z_decode)
-
-            decodes = np.stack(decodes).transpose([1, 0, 2, 3, 4])
-            for idx, img in enumerate(decodes):
-                img = np.concatenate([[real1_batch[idx]], img, [real2_batch[idx]]], 0)
-                save_image(img, '{}/test{}_interp_{}.png'.format(root_path, step, idx), nrow=10 + 2)
+            self.interpolate_G(real1_batch, step, root_path)
+            #self.interpolate_D(real1_batch, real2_batch, step, root_path)
 
             z_fixed = np.random.uniform(-1, 1, size=(self.batch_size, self.z_num))
-            self.generate(z_fixed, path="{}/test{}_G_z.png".format(root_path, step))
+            G_z = self.generate(z_fixed, path=os.path.join(root_path, "test{}_G_z.png".format(step)))
+
+            if all_G_z is None:
+                all_G_z = G_z
+            else:
+                all_G_z = np.concatenate([all_G_z, G_z])
+            save_image(all_G_z, '{}/G_z{}.png'.format(root_path, step))
+
+        save_image(all_G_z, '{}/all_G_z.png'.format(root_path), nrow=16)
 
     def get_image_from_loader(self):
         x = self.data_loader.eval(session=self.sess)

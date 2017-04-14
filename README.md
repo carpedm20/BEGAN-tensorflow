@@ -42,43 +42,31 @@ To test a model (use your `load_path`):
 
 ## Results
 
-### Autoencoded Generator outputs
+### Generator output with `gamma=0.5`
 
-<img src="./assets/AE_G1.png" width="7%"> <img src="./assets/AE_G2.png" width="7%">
-<img src="./assets/AE_G3.png" width="7%"> <img src="./assets/AE_G4.png" width="7%">
-<img src="./assets/AE_G5.png" width="7%"> <img src="./assets/AE_G6.png" width="7%">
-<img src="./assets/AE_G7.png" width="7%"> <img src="./assets/AE_G8.png" width="7%">
-<img src="./assets/AE_G9.png" width="7%"> <img src="./assets/AE_G10.png" width="7%">
-<img src="./assets/AE_G11.png" width="7%"> <img src="./assets/AE_G12.png" width="7%">
-<img src="./assets/AE_G13.png" width="7%"> <img src="./assets/AE_G14.png" width="7%">
-<img src="./assets/AE_G15.png" width="7%"> <img src="./assets/AE_G16.png" width="7%">
-<img src="./assets/AE_G17.png" width="7%"> <img src="./assets/AE_G18.png" width="7%">
-<img src="./assets/AE_G19.png" width="7%"> <img src="./assets/AE_G20.png" width="7%">
-<img src="./assets/AE_G21.png" width="7%"> <img src="./assets/AE_G22.png" width="7%">
-<img src="./assets/AE_G23.png" width="7%"> <img src="./assets/AE_G24.png" width="7%">
-<img src="./assets/AE_G25.png" width="7%"> <img src="./assets/AE_G26.png" width="7%">
+![all_G_z0](./assets/all_G_z0.png)
+![all_G_z1](./assets/all_G_z1.png)
 
 
-### Interpolation of real images with Discriminator
+### Interpolation of Generator output with `gamma=0.5`
 
-![alt tag](./assets/AE_batch.png)
-![alt tag](./assets/interp_1.png)
-![alt tag](./assets/interp_2.png)
-![alt tag](./assets/interp_3.png)
-![alt tag](./assets/interp_4.png)
-![alt tag](./assets/interp_5.png)
-![alt tag](./assets/interp_6.png)
-![alt tag](./assets/interp_7.png)
-![alt tag](./assets/interp_8.png)
-![alt tag](./assets/interp_9.png)
+![interp_G0](./assets/interp_G0.png)
+![interp_G1](./assets/interp_G1.png)
+
+    
+### Interpolation of Discriminator otuput of real images
+    
+![alt tag](./assets/AE_batch.png)   
+![alt tag](./assets/interp_1.png)   
+![alt tag](./assets/interp_2.png)   
+![alt tag](./assets/interp_3.png)   
+![alt tag](./assets/interp_4.png)   
+![alt tag](./assets/interp_5.png)   
+![alt tag](./assets/interp_6.png)   
+![alt tag](./assets/interp_7.png)   
+![alt tag](./assets/interp_8.png)   
+![alt tag](./assets/interp_9.png)   
 ![alt tag](./assets/interp_10.png)
-
-
-### Generator and Discriminator outputs (after 58k step)
-
-<img src="./assets/58600.png" width="80%">
-
-(in progress)
 
 
 ## Author
