@@ -69,6 +69,13 @@ To test a model (use your `load_path`):
 ![alt tag](./assets/interp_10.png)
 
 
+## Related works
+
+- [DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow)
+- [DiscoGAN-pytorch](https://github.com/carpedm20/DiscoGAN-pytorch)
+- [simulated-unsupervised-tensorflow](https://github.com/carpedm20/simulated-unsupervised-tensorflow)
+
+
 ## Author
 
 Taehoon Kim / [@carpedm20](http://carpedm20.github.io)
