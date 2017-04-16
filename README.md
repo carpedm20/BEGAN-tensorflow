@@ -62,7 +62,7 @@ To test a model (use your `load_path`):
 ![interp_G0_128x128](./assets/interp_G0_128x128.png)
 
     
-### Interpolation of Discriminator otuput of real images
+### Interpolation of Discriminator output of real images
     
 ![alt tag](./assets/AE_batch.png)   
 ![alt tag](./assets/interp_1.png)   
