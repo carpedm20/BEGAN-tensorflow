@@ -62,8 +62,8 @@ class Trainer(object):
         self.g_lr = tf.Variable(config.g_lr, name='g_lr')
         self.d_lr = tf.Variable(config.d_lr, name='d_lr')
 
-        self.g_lr_update = tf.assign(self.g_lr, self.g_lr * 0.5, name='g_lr_update')
-        self.d_lr_update = tf.assign(self.d_lr, self.d_lr * 0.5, name='d_lr_update')
+        self.g_lr_update = tf.assign(self.g_lr, tf.maximum(self.g_lr * 0.5, config.lr_lower_boundary), name='g_lr_update')
+        self.d_lr_update = tf.assign(self.d_lr, tf.maximum(self.d_lr * 0.5, config.lr_lower_boundary), name='d_lr_update')
 
         self.gamma = config.gamma
         self.lambda_k = config.lambda_k
