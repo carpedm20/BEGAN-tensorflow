@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-import StringIO
+#import StringIO
 import scipy.misc
 import numpy as np
 from glob import glob
