@@ -17,6 +17,7 @@ def main(config):
         batch_size = config.batch_size
         do_shuffle = True
     else:
+        setattr(config, 'batch_size', 64)
         if config.test_data_path is None:
             data_path = config.data_path
         else:
@@ -24,9 +25,9 @@ def main(config):
         batch_size = config.sample_per_image
         do_shuffle = False
 
-    data_loader = get_loader(data_path, config.batch_size, config.input_scale_size,
-                             config.data_format, config.split)
-
+    data_loader = get_loader(
+            data_path, config.batch_size, config.input_scale_size,
+            config.data_format, config.split)
     trainer = Trainer(config, data_loader)
 
     if config.is_train:
