@@ -237,7 +237,7 @@ class Trainer(object):
                 self.z_r, self.conv_hidden_num, self.channel, self.repeat_num, self.data_format, reuse=True)
 
         with tf.variable_scope("test") as vs:
-            self.z_r_loss = tf.reduce_mean(tf.abs(self.x - G_z_r))
+            self.z_r_loss = tf.reduce_mean(tf.abs(norm_img(self.x) - G_z_r))
             self.z_r_optim = z_optimizer.minimize(self.z_r_loss, var_list=[self.z_r])
 
         test_variables = tf.contrib.framework.get_variables(vs)
